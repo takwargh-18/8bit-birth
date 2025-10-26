@@ -1,107 +1,169 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-const W = canvas.width;
-const H = canvas.height;
+let W = canvas.width = window.innerWidth;
+let H = canvas.height = window.innerHeight;
 
-const fireworkSound = document.getElementById("fireworkSound");
+window.addEventListener("resize", () => {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+});
 
-// 🎇 Background City
-function drawCitySky() {
-  ctx.fillStyle = "#0a0a23";
-  ctx.fillRect(0, 0, W, H);
-  for (let i = 0; i < 80; i++) {
-    ctx.fillStyle = "#88f";
-    ctx.fillRect(Math.random() * W, Math.random() * H * 0.5, 2, 2);
-  }
-  for (let i = 0; i < 10; i++) {
-    const w = 60;
-    const h = 120 + Math.random() * 80;
-    const x = i * (W / 10);
-    const y = H - h;
-    ctx.fillStyle = "#222";
-    ctx.fillRect(x, y, w, h);
-  }
-  ctx.beginPath();
-  ctx.arc(W - 80, 80, 30, 0, Math.PI * 2);
-  ctx.fillStyle = "#ccc";
-  ctx.fill();
-}
+let step = 0;
+let showText = false;
+let message = "สุขสันต์วันเกิด บัง พลอย ซู่ลิ่ง 🎉";
+let textColor = "#ffc0cb"; // pink pastel
 
-// 🎂 Cake
-let cakeLevel = 0;
-function drawCake() {
-  const baseX = W / 2 - 60;
-  const baseY = H - 120;
-  for (let i = 0; i <= cakeLevel; i++) {
-    ctx.fillStyle = i % 2 === 0 ? "#f88" : "#fff";
-    ctx.fillRect(baseX + i * 5, baseY - i * 30, 120 - i * 10, 30);
-  }
-}
+// 💧 Rain
+let raindrops = Array.from({ length: 150 }, () => ({
+  x: Math.random() * W,
+  y: Math.random() * H,
+  len: Math.random() * 20 + 10,
+  speed: Math.random() * 2 + 1
+}));
 
 // 🎆 Fireworks
 let fireworks = [];
-function triggerFirework() {
-  for (let i = 0; i < 60; i++) {
-    fireworks.push({
-      x: W / 2,
-      y: H / 2,
-      angle: Math.random() * Math.PI * 2,
-      speed: Math.random() * 5 + 2,
-      size: 2 + Math.random() * 2,
-      life: 0,
-      color: `hsl(${Math.random() * 360}, 100%, 70%)`
-    });
+
+function triggerFireworks() {
+  for (let i = 0; i < 10; i++) {
+    const fx = Math.random() * W;
+    const fy = Math.random() * H * 0.5 + 50;
+    for (let j = 0; j < 30; j++) {
+      fireworks.push({
+        x: fx,
+        y: fy,
+        angle: Math.random() * Math.PI * 2,
+        speed: Math.random() * 3 + 1,
+        radius: 0,
+        life: 0,
+        color: `hsl(${Math.random() * 360}, 100%, 70%)`
+      });
+    }
   }
-  fireworkSound.play();
 }
+
+// 🎂 เค้กวาดด้วย code
+function drawCake() {
+  const baseX = W / 2 - 60;
+  const baseY = H - 150;
+
+  // ชั้นเค้ก
+  ctx.fillStyle = "#ffb6c1"; // strawberry pink
+  ctx.fillRect(baseX, baseY, 120, 40);
+
+  // วิปครีม
+  ctx.fillStyle = "#fff";
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    ctx.arc(baseX + 20 * i + 10, baseY, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // เทียน
+  ctx.fillStyle = "#ff0";
+  ctx.fillRect(W / 2 - 5, baseY - 30, 10, 30);
+
+  // เปลวไฟ
+  ctx.beginPath();
+  ctx.arc(W / 2, baseY - 35, 6, 0, Math.PI * 2);
+  ctx.fillStyle = "#f90";
+  ctx.fill();
+}
+
+// 🏙️ City BG
+function drawBackground() {
+  ctx.fillStyle = "#0a0a23";
+  ctx.fillRect(0, 0, W, H);
+
+  // อาคาร
+  const count = 10;
+  for (let i = 0; i < count; i++) {
+    const bw = W / count * 0.9;
+    const bh = 150 + Math.random() * 100;
+    const x = i * (W / count) + 10;
+    const y = H - bh;
+    ctx.fillStyle = "#1c2a45";
+    ctx.fillRect(x, y, bw, bh);
+  }
+
+  // พระจันทร์
+  ctx.beginPath();
+  ctx.arc(W - 60, 80, 30, 0, Math.PI * 2);
+  ctx.fillStyle = "#ddd";
+  ctx.fill();
+}
+
+// 🌧️ ฝน
+function drawRain() {
+  ctx.strokeStyle = "#4a6ea9";
+  ctx.lineWidth = 1;
+  raindrops.forEach(r => {
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x, r.y + r.len);
+    ctx.stroke();
+    r.y += r.speed;
+    if (r.y > H) {
+      r.y = -r.len;
+      r.x = Math.random() * W;
+    }
+  });
+}
+
+// 🎆 Fireworks
 function drawFireworks() {
   fireworks.forEach(p => {
-    p.x += Math.cos(p.angle) * p.speed;
-    p.y += Math.sin(p.angle) * p.speed;
+    const dx = Math.cos(p.angle) * p.speed;
+    const dy = Math.sin(p.angle) * p.speed;
+    p.x += dx;
+    p.y += dy;
     p.life++;
+
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
     ctx.fillStyle = p.color;
     ctx.fill();
   });
-  fireworks = fireworks.filter(p => p.life < 50);
+
+  fireworks = fireworks.filter(p => p.life < 60);
 }
 
-// 📝 Typewriter
-let message = "สุขสันต์วันเกิด บัง พลอย ซู่ลิ่ง 🎉";
-let typed = "";
-let typeIndex = 0;
-function drawTypewriter() {
-  if (typeIndex < message.length) {
-    typed += message[typeIndex++];
-  }
-  ctx.fillStyle = "#0f0";
+// 📝 ข้อความ
+function drawText() {
+  ctx.fillStyle = textColor;
   ctx.font = "28px 'Courier New'";
   ctx.textAlign = "center";
-  ctx.fillText(typed, W / 2, H / 2 + 180);
+  ctx.fillText(message, W / 2, H / 2 + 160);
 }
-
-// 🔁 Main
-let step = 0;
-let showText = false;
 
 function animate() {
   ctx.clearRect(0, 0, W, H);
-  drawCitySky();
+  drawBackground();
+  drawRain();
 
-  if (step < 60) drawCake();
-  else if (step === 60) triggerFirework();
+  if (step < 100) {
+    drawCake();
+  }
 
-  if (step >= 60) drawFireworks();
-  if (step > 100) showText = true;
-  if (showText) drawTypewriter();
+  if (step === 100) {
+    triggerFireworks();
+  }
 
+  if (step >= 100) {
+    drawFireworks();
+  }
+
+  if (step > 160) {
+    showText = true;
+  }
+
+  if (showText) {
+    drawText();
+  }
+
+  step++;
   requestAnimationFrame(animate);
-  if (step <= 200) step++;
-  if (step % 30 === 0 && cakeLevel < 3) cakeLevel++;
 }
 
 animate();
